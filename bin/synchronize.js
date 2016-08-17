@@ -10,6 +10,7 @@ const symlinkSync = lib.symlinkSync;
 const modules = require('./modules');
 
 function synchronize() {
+  console.info('conf.modulesRootPath:',conf.modulesRootPath)
   for(let moduleName of fs.readdirSync(conf.modulesRootPath)) {
     if(moduleName !== 'node_modules' && isDirSync(path.join(conf.modulesRootPath, moduleName))) {
       modules.synchronize(moduleName);

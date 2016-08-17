@@ -67,6 +67,7 @@ function getDefaultConf() {
     modulesRootPath: modulesRootPath,
 
     clientModulesName: undefined,
+    serverModulesName: undefined,
     moduleClientCommonName: undefined,
     moduleServerCommonName: undefined,
     serverRootPathShouldExist: false,
@@ -106,6 +107,7 @@ function getConf() {
   setConfValue('nodeModulesPath', conf.clientRootPath);
   setConfValue('serverSrcPath', conf.serverRootPath);
   setConfValue('clientModulesName');
+  setConfValue('serverModulesName');
   setConfValue('moduleClientCommonName');
   setConfValue('moduleServerCommonName');
   setConfValue('serverRootPathShouldExist');
@@ -126,6 +128,7 @@ function showConf() {
   showConfValue('nodeModulesPath');
   showConfValue('serverSrcPath');
   showConfValue('clientModulesName');
+  showConfValue('serverModulesName');
   showConfValue('moduleClientCommonName');
   showConfValue('moduleServerCommonName');
   showConfValue('serverRootPathShouldExist');

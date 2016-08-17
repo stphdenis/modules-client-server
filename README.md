@@ -1,7 +1,6 @@
 # modules-client-server
 
-This package structure your project so you can have modules in a place
-and your client and server elsewhere.
+This package structure your project so you can have your client, server and modules in different places.
 
 ## Default configuration
 
@@ -76,23 +75,25 @@ So, at the end, we have
 
 ## How to use by default
 
-Like I work with meteor, the default is that this package need the server to be create separately.
-
-You can create a `modules-client-server.conf.json` file if you have other preferences.
+You can create a `modules-client-server.conf.json` file if you have other preferences. You have to execute a command in the same directory as the configuration file if it is defined.
 
 Fist, install the package as global :
 ```
 npm install -g modules-client-server
 ```
 
-So a sample with Meteor :
+So as a sample :
 ```
 mkdir sampleProj
 cd sampleProj
-meteor create server
-modules-client-server --init --add todo
-cd client
-npm install --save-dev meteor-client-packages-meteor
+modules-client-server --init --add moduleXXX
+cd modules\moduleXXX
+echo // > client\clientFILE.js
+mkdir     client\clientDIR
+echo // > server\serverFILE.js
+mkdir     server\serverDIR
+echo // > common\commonFILE.js
+mkdir     common\commonDIR
 ```
 
 Each time you add or remove common files or directories you have to sync them with client and server side :
@@ -111,26 +112,26 @@ NOTA BENE: for Windows, if you have files in the root of your common module dire
 
 ## Parameter file : `modules-client-server.conf.js`
 
-The commands are to be done where is the paramter file.
+The commands are to be done where is the parameter file.
 
 You can change where client, server or common directories are on your system.
 
 The `--conf` command show you the current configuration.
 
 - `rootPath` : used if `clientRootPath`, `serverRootPath` or `modulesRootPath` have relative paths
-- `clientRootPath`  : root path of the client
-- `serverRootPath`  : root path of the server
-- `modulesRootPath` : root path of the modules
-- `clientSrcPath`   : src path of the client (based on `clientRootPath` if relative)
-- `nodeModulesPath` : `node_modules` path of the modules (based on `clientRootPath` if relative)
-- `serverSrcPath`   : src path of the server (based on `serverRootPath` if relative)
+- `clientRootPath`  : root path of the client (can be relative to `rootPath`)
+- `serverRootPath`  : root path of the server (can be relative to `rootPath`)
+- `modulesRootPath` : root path of the modules (can be relative to `rootPath`)
+- `clientSrcPath`   : src path of the client (can be relative to `clientRootPath`)
+- `nodeModulesPath` : `node_modules` path of the modules (can be relative to `clientRootPath`)
+- `serverSrcPath`   : src path of the server (can be relative to `serverRootPath`)
 - `serverRootPathShouldExist` : the server must exist before `--init`
 - `clientModulesName` : name of the directory where all modules have to be under `clientSrcPath` if defined
 - `serverModulesName` : name of the directory where all modules have to be under `serverSrcPath` if defined
 - `moduleClientCommonName` : name of the directory where all common ressources of each modules have to be for the client side if defined
 - `moduleServerCommonName` : name of the directory where all common ressources of each modules have to be for the server side if defined
 
-If moduleClientCommonName and moduleServerCommonName are both used, you don't have to `--sync`.
+If moduleClientCommonName and moduleServerCommonName are both used, you don't have to use `--sync`.
 
 ### To have this configuration :
 ```
@@ -153,10 +154,10 @@ If moduleClientCommonName and moduleServerCommonName are both used, you don't ha
         └── commonDIR
 ```
 `modules-client-server.conf.js` file :
-```
+```json
 {
-  clientModulesName: modulesS,
-  serverModulesName: modulesN
+  "clientModulesName": "modulesS",
+  "serverModulesName": "modulesN"
 }
 ```
 
