@@ -131,7 +131,7 @@ The `--conf` command show you the current configuration.
 - `moduleClientCommonName` : name of the directory where all common ressources of each modules have to be for the client side if defined
 - `moduleServerCommonName` : name of the directory where all common ressources of each modules have to be for the server side if defined
 
-If moduleClientCommonName and moduleServerCommonName are both used, you don't have to use `--sync`.
+If `moduleClientCommonName` and `moduleServerCommonName` are both used, you don't have to use `--sync`.
 
 ### To have this configuration :
 ```
