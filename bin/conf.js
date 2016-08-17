@@ -1,0 +1,137 @@
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+
+function getDefaultConf() {
+
+  const rootPath = path.resolve();
+
+  const clientRootPath = path.join(rootPath, 'client');
+  const modulesRootPath = path.join(rootPath, 'modules');
+  const serverRootPath = path.join(rootPath, 'server');
+
+  const clientSrcPath = path.join(clientRootPath, 'src');
+  const nodeModulesPath = path.join(clientRootPath, 'node_modules');
+  const serverSrcPath = path.join(serverRootPath, 'src');
+
+/* V1
+┌ root
+├─┬ clientRoot
+| └─┬ clientSrc
+|   └─┬ ${clientModulesName}
+|     └── moduleXXX <=symlink=> modulesRoot/moduleXXX/client
+├─┬ modulesRoot
+| └─┬ moduleXXX
+|   ├─┬ client
+|   | └── ${moduleClientCommonName} <=symlink=> modulesRoot/moduleXXX/common
+|   ├── common
+|   └─┬ server
+|     └── ${moduleServerCommonName} <=symlink=> modulesRoot/moduleXXX/common
+└─┬ serverRoot
+  └─┬ serverSrc
+    └─┬ ${serverModulesName}
+      └── moduleXXX <=symlink=> modulesRoot/moduleXXX/server
+*/
+
+/* Default :
+┌ root
+├─┬ clientRoot
+| └─┬ clientSrc
+|   └── moduleXXX <=symlink=> modulesRoot/moduleXXX/client
+├─┬ modulesRoot
+| └─┬ moduleXXX
+|   ├─┬ client
+|   | ├── commonDirXXX <=symlink=> modulesRoot/moduleXXX/common
+|   | └── commonFileXXX <=symlink=> modulesRoot/moduleXXX/common
+|   ├─┬ common
+|   | ├── commonDirXXX
+|   | └── commonFileXXX
+|   └─┬ server
+|     ├── commonDirXXX <=symlink=> modulesRoot/moduleXXX/common
+|     └── commonFileXXX <=symlink=> modulesRoot/moduleXXX/common
+└─┬ serverRoot
+  └─┬ serverSrc
+    └── moduleXXX <=symlink=> modulesRoot/moduleXXX/server
+*/// For commonFileXXX on Windows, must execute as admin !
+  return {
+    rootPath: rootPath,
+
+    clientRootPath: clientRootPath,
+    clientSrcPath: clientSrcPath,
+    nodeModulesPath: nodeModulesPath,
+
+    serverRootPath: serverRootPath,
+    serverSrcPath: serverSrcPath,
+
+    modulesRootPath: modulesRootPath,
+
+    clientModulesName: undefined,
+    moduleClientCommonName: undefined,
+    moduleServerCommonName: undefined,
+    serverRootPathShouldExist: false,
+  };
+}
+
+function getConf() {
+  const conf = getDefaultConf();
+  conf.pathConf = path.join(conf.rootPath, 'modules-client-server.conf.json');
+
+  try {
+    fs.accessSync(pathConf, fs.F_OK);
+  } catch (e) {
+    conf.pathConf = undefined;
+  }
+
+  let localConf;
+  if(conf.pathConf) {
+    localConf = JSON.parse(fs.readFileSync(conf.pathConf));
+  } else {
+    localConf = {};
+  }
+
+  function setConfValue(confKey, rootPath) {
+    const localConfValue = localConf[confKey];
+    if(rootPath && localConfValue && localConfValue[0] === '.') {
+      conf[confKey] = path.join(rootPath, localConfValue);
+    } else {
+      conf[confKey] = localConfValue || conf[confKey];
+    }
+  }
+
+  setConfValue('rootPath');
+  setConfValue('clientRootPath', conf.rootPath);
+  setConfValue('modulesRootPath', conf.rootPath);
+  setConfValue('clientSrcPath', conf.clientRootPath);
+  setConfValue('nodeModulesPath', conf.clientRootPath);
+  setConfValue('serverSrcPath', conf.serverRootPath);
+  setConfValue('clientModulesName');
+  setConfValue('moduleClientCommonName');
+  setConfValue('moduleServerCommonName');
+  setConfValue('serverRootPathShouldExist');
+
+  return conf;
+}
+
+function showConfValue(key) {
+  console.info(key, ':', module.exports[key]);
+}
+
+function showConf() {
+  console.info('Configuration file :', module.exports.pathConf);
+  showConfValue('rootPath');
+  showConfValue('clientRootPath');
+  showConfValue('modulesRootPath');
+  showConfValue('clientSrcPath');
+  showConfValue('nodeModulesPath');
+  showConfValue('serverSrcPath');
+  showConfValue('clientModulesName');
+  showConfValue('moduleClientCommonName');
+  showConfValue('moduleServerCommonName');
+  showConfValue('serverRootPathShouldExist');
+}
+
+module.exports = getConf();
+module.exports.watchers = {};
+module.exports.watcherActive = false;
+module.exports.showConf = showConf;

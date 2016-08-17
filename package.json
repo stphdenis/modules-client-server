@@ -1,0 +1,17 @@
+{
+  "name": "modules-client-server",
+  "version": "1.0.7",
+  "description": "",
+  "bin": "./bin/modules-client-server.js",
+  "engines": {
+    "node": "4 || 5 || 6"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fs-extra": "^0.30.0"
+  }
+}
