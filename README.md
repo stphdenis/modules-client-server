@@ -108,7 +108,7 @@ modules-client-server --watch
 ```
 While watching, you can use an other console to add or remove modules.
 
-NOTA BENE: for Windows, to `--sync` or `--watch`, if you have files in the root of your common module directory, your console MUST be executed as Administrator. Directories are OK.
+**NOTA BENE:** for Windows, to `--sync` or `--watch`, if you have files in the root of your common module directory, your console MUST be executed as Administrator. Directories are OK.
 
 ## Parameter file : `modules-client-server.conf.js`
 
