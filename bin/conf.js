@@ -77,12 +77,16 @@ function getDefaultConf() {
 function getConf() {
   const conf = getDefaultConf();
   conf.pathConf = path.join(conf.rootPath, 'modules-client-server.conf.json');
+  console.info('--------------- conf.pathConf :', conf.pathConf);
 
   try {
-    fs.accessSync(pathConf, fs.F_OK);
+    console.info('--------------- try');
+    fs.accessSync(conf.pathConf, fs.F_OK);
   } catch (e) {
+    console.info('--------------- catch');
     conf.pathConf = undefined;
   }
+  console.info('--------------- conf.pathConf :', conf.pathConf);
 
   let localConf;
   if(conf.pathConf) {
@@ -92,17 +96,23 @@ function getConf() {
   }
 
   function setConfValue(confKey, rootPath) {
+    console.info('confKey :', confKey);
+    console.info('rootPath :', rootPath);
     const localConfValue = localConf[confKey];
+    console.info('localConf[confKey] :', localConfValue);
     if(rootPath && localConfValue && localConfValue[0] === '.') {
+      console.info('conf[confKey] :', path.join(rootPath, localConfValue));
       conf[confKey] = path.join(rootPath, localConfValue);
     } else {
       conf[confKey] = localConfValue || conf[confKey];
+      console.info('final conf[confKey] :', conf[confKey]);
     }
   }
 
   setConfValue('rootPath');
   setConfValue('clientRootPath', conf.rootPath);
   setConfValue('modulesRootPath', conf.rootPath);
+  setConfValue('serverRootPath', conf.rootPath);
   setConfValue('clientSrcPath', conf.clientRootPath);
   setConfValue('nodeModulesPath', conf.clientRootPath);
   setConfValue('serverSrcPath', conf.serverRootPath);
@@ -124,6 +134,7 @@ function showConf() {
   showConfValue('rootPath');
   showConfValue('clientRootPath');
   showConfValue('modulesRootPath');
+  showConfValue('serverRootPath');
   showConfValue('clientSrcPath');
   showConfValue('nodeModulesPath');
   showConfValue('serverSrcPath');

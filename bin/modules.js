@@ -131,7 +131,7 @@ function getClientModulePath(moduleName) {
 
 function getServerModulePath(moduleName) {
   if(conf.serverModulesName) {
-    return path.join(conf.serverSrcPath, conf.clientModulesName, moduleName);
+    return path.join(conf.serverSrcPath, conf.serverModulesName, moduleName);
   } else {
     return path.join(conf.serverSrcPath, moduleName);
   }
