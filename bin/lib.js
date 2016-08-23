@@ -4,64 +4,34 @@ const fs = require('fs-extra');
 const conf = require('./conf');
 const platformIsWindows = require('process').platform === 'win32';
 
-function fsExistsSync(filePath) {
+function pathExists(path) {
   try {
-    fs.accessSync(filePath, fs.F_OK);
+    fs.accessSync(path, fs.F_OK);
     return true;
-  } catch (e) {
+  } catch (error) {
     return false;
   }
 }
-module.exports.fsExistsSync = fsExistsSync;
 
-function unlinkSync(path) {
-  if(isSymlinkSync(path)) {
-    console.info('unlink:', path.substr(conf.rootPath.length+1));
-    fs.unlinkSync(path);
+function getSymlinkMetadata(targetPath) {
+  if (targetPath.startsWith(conf.clientSrcPath)) {
+    return { symlinkList: 'clientSymlinkList', symlinkPath: targetPath.substr(conf.clientRootPath.length + 1).replace(/\\/g, '/') };
+  } else if (targetPath.startsWith(conf.serverSrcPath)) {
+    return { symlinkList: 'serverSymlinkList', symlinkPath: targetPath.substr(conf.serverRootPath.length + 1).replace(/\\/g, '/') };
+  } else if (targetPath.startsWith(conf.modulesRootPath)) {
+    return { symlinkList: 'modulesSymlinkList', symlinkPath: targetPath.substr(conf.modulesRootPath.length + 1).replace(/\\/g, '/') };
+  } else {
+    console.warn('Symlink ?', targetPath);
+    process.exit();
   }
 }
-module.exports.unlinkSync = unlinkSync;
 
-function isSymlinkSync(filePath) {
-  try {
-    return fs.lstatSync(filePath).isSymbolicLink();
-  } catch (e) {
-    return false;
-  }
-}
-module.exports.isSymlinkSync = isSymlinkSync;
-
-function isDirNotSymlinkSync(filePath) {
-  try {
-    return fs.lstatSync(filePath).isDirectory();
-  } catch (e) {
-    return false;
-  }
-}
-module.exports.isDirNotSymlinkSync = isDirNotSymlinkSync;
-
-function isDirSync(filePath) {
-  try {
-    return fs.statSync(filePath).isDirectory();
-  } catch (e) {
-    return false;
-  }
-}
-module.exports.isDirSync = isDirSync;
-
-function mkdirsSync(dirPath) {
-  if(!fsExistsSync(dirPath)) {
-    console.info('mkdir:', dirPath.substr(conf.rootPath.length+1));
-    fs.mkdirsSync(dirPath);
-  }
-}
-module.exports.mkdirsSync = mkdirsSync;
-
-function symlinkSync(targetPath, sourcePath) {
-  if(!fsExistsSync(sourcePath)) {
-    console.info('symlink:', targetPath.substr(conf.rootPath.length+1), '===>', sourcePath.substr(conf.rootPath.length+1));
-    if(isDirSync(targetPath)) {
-      if(platformIsWindows) {
+function symlink(targetPath, sourcePath) {
+  const symlinkMetadata = getSymlinkMetadata(sourcePath);
+  const symlinkPath = sourcePath.substr(conf.rootPath.length + 1);
+  if (!pathExists(sourcePath)) {
+    if (isDir(targetPath)) {
+      if (platformIsWindows) {
         fs.symlinkSync(targetPath, sourcePath, 'junction');
       } else {
         fs.symlinkSync(targetPath, sourcePath, 'dir');
@@ -70,15 +40,91 @@ function symlinkSync(targetPath, sourcePath) {
       fs.symlinkSync(targetPath, sourcePath, 'file');
     }
   }
+  if (conf[symlinkMetadata.symlinkList + 'Add'].indexOf(symlinkMetadata.symlinkPath) === -1) {
+    conf[symlinkMetadata.symlinkList + 'Add'].push(symlinkMetadata.symlinkPath);
+  }
 }
-module.exports.symlinkSync = symlinkSync;
+module.exports.symlink = symlink;
+
+function unlink(sourcePath) {
+  const symlinkMetadata = getSymlinkMetadata(sourcePath);
+  const symlinkPath = sourcePath.substr(conf.rootPath.length + 1);
+  if (isSymlink(sourcePath)) {
+    fs.unlinkSync(sourcePath);
+  }
+  if (conf[symlinkMetadata.symlinkList + 'Remove'].indexOf(symlinkMetadata.symlinkPath) === -1) {
+    conf[symlinkMetadata.symlinkList + 'Remove'].push(symlinkMetadata.symlinkPath);
+  }
+}
+module.exports.unlink = unlink;
+
+function isSymlink(filePath) {
+  try {
+    return fs.lstatSync(filePath).isSymbolicLink();
+  } catch (e) {
+    return false;
+  }
+}
+module.exports.isSymlink = isSymlink;
+
+function isDirNotSymlink(filePath) {
+  try {
+    return fs.lstatSync(filePath).isDirectory();
+  } catch (e) {
+    return false;
+  }
+}
+module.exports.isDirNotSymlink = isDirNotSymlink;
+
+function isDir(filePath) {
+  try {
+    return fs.statSync(filePath).isDirectory();
+  } catch (e) {
+    return false;
+  }
+}
+module.exports.isDir = isDir;
+
+function mkdirs(dirPath) {
+  if (!pathExists(dirPath)) {
+    fs.mkdirsSync(dirPath);
+  }
+}
+module.exports.mkdirs = mkdirs;
 
 function hasIntersection(array1, array2) {
-  for(let array1Value of array1) {
-    if(array2.indexOf(array1Value) >= 0) {
+  for (let array1Value of array1) {
+    if (array2.indexOf(array1Value) >= 0) {
       return true;
     }
   }
   return false;
 }
 module.exports.hasIntersection = hasIntersection;
+
+Array.prototype.add = function add(value) {
+  if(this.indexOf(value) === -1) {
+    this.push(value);
+  }
+}
+
+Array.prototype.addList = function addList(listToAdd) {
+  for(let valueName of listToAdd) {
+    this.add(valueName);
+  }
+  return this;
+}
+
+Array.prototype.remove = function remove(value) {
+  const i = this.indexOf(value);
+  if(i >= 0) {
+    this.splice(i, 1);
+  }
+}
+
+Array.prototype.removeList = function removeList(listToRemove) {
+  for(let valueName of listToRemove) {
+    this.remove(valueName);
+  }
+  return this;
+}

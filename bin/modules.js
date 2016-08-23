@@ -4,54 +4,55 @@ const fs = require('fs');
 const path = require('path');
 const conf = require('./conf');
 const lib = require('./lib');
-const isDirSync = lib.isDirSync;
-const mkdirsSync = lib.mkdirsSync;
-const isSymlinkSync = lib.isSymlinkSync;
-const symlinkSync = lib.symlinkSync;
-const unlinkSync = lib.unlinkSync;
 
 function synchronize(moduleName) {
   const moduleCommonPath = getModuleCommonPath(moduleName);
   const moduleClientPath = getModuleClientPath(moduleName);
   const moduleServerPath = getModuleServerPath(moduleName);
-  if(!conf.moduleClientCommonName) {
+  if(conf.moduleClientCommonName) {
+    lib.symlink(moduleCommonPath, getModuleClientCommonPath(moduleName));
+  } else {
     for(let commonDir of fs.readdirSync(moduleCommonPath)) {
-      symlinkSync(path.join(moduleCommonPath, commonDir), path.join(moduleClientPath, commonDir));
+      lib.symlink(path.join(moduleCommonPath, commonDir), path.join(moduleClientPath, commonDir));
     }
-    for(let commonDir of fs.readdirSync(moduleClientPath)) {
-      if(isSymlinkSync(path.join(moduleClientPath, commonDir)) && !isDirSync(path.join(moduleCommonPath, commonDir))) {
-        unlinkSync(path.join(moduleClientPath, commonDir));
+    for(let symlinkDir of fs.readdirSync(moduleClientPath)) {
+      if(lib.isSymlink(path.join(moduleClientPath, symlinkDir)) && !lib.isDir(path.join(moduleCommonPath, symlinkDir))) {
+        lib.unlink(path.join(moduleClientPath, symlinkDir));
       }
     }
   }
-  if(!conf.moduleServerCommonName) {
+  if(conf.moduleServerCommonName) {
+    lib.symlink(moduleCommonPath, getModuleServerCommonPath(moduleName));
+  } else {
     for(let commonDir of fs.readdirSync(moduleCommonPath)) {
-      symlinkSync(path.join(moduleCommonPath, commonDir), path.join(moduleServerPath, commonDir));
+      lib.symlink(path.join(moduleCommonPath, commonDir), path.join(moduleServerPath, commonDir));
     }
-    for(let commonDir of fs.readdirSync(moduleServerPath)) {
-      if(isSymlinkSync(path.join(moduleServerPath, commonDir)) && !isDirSync(path.join(moduleCommonPath, commonDir))) {
-        unlinkSync(path.join(moduleServerPath, commonDir));
+    for(let symlinkDir of fs.readdirSync(moduleServerPath)) {
+      if(lib.isSymlink(path.join(moduleServerPath, symlinkDir)) && !lib.isDir(path.join(moduleCommonPath, symlinkDir))) {
+        lib.unlink(path.join(moduleServerPath, symlinkDir));
       }
     }
   }
 }
 
-function watchStart(moduleName) {
+function startWatch(moduleName) {
   if(conf.watcherActive && !conf.watchers.moduleName) {
     conf.watchers[moduleName] = fs.watch(getModuleCommonPath(moduleName), event => {
       synchronize(moduleName);
+      gitignore.update();
+      conf.update();
     });
   }
 }
 
-function watchStop(moduleName) {
+function stopWatch(moduleName) {
   if(conf.watcherActive && conf.watchers[moduleName]) {
     conf.watchers[moduleName].close();
   }
 }
 
-function addModule(moduleName) {
-  if(!isDirSync(conf.clientSrcPath) || !isDirSync(conf.serverSrcPath) || !isDirSync(conf.modulesRootPath)) {
+function add(moduleName) {
+  if(!lib.isDir(conf.clientSrcPath) || !lib.isDir(conf.serverSrcPath) || !lib.isDir(conf.modulesRootPath)) {
     console.warn('you have to initialize with --init');
     process.exit();
   }
@@ -60,37 +61,25 @@ function addModule(moduleName) {
   const moduleCommonPath = getModuleCommonPath(moduleName);
   const moduleServerPath = getModuleServerPath(moduleName);
 
-  mkdirsSync(moduleClientPath);
-  mkdirsSync(moduleCommonPath);
-  mkdirsSync(moduleServerPath);
+  lib.mkdirs(moduleClientPath);
+  lib.mkdirs(moduleCommonPath);
+  lib.mkdirs(moduleServerPath);
 
-  symlinkSync(moduleClientPath, getClientModulePath(moduleName));
-  symlinkSync(moduleServerPath, getServerModulePath(moduleName));
+  lib.symlink(moduleClientPath, getClientModulePath(moduleName));
+  lib.symlink(moduleServerPath, getServerModulePath(moduleName));
   if(conf.moduleClientCommonName) {
-    symlinkSync(moduleCommonPath, getModuleClientCommonPath(moduleName));
+    lib.symlink(moduleCommonPath, getModuleClientCommonPath(moduleName));
   }
   if(conf.moduleServerCommonName) {
-    symlinkSync(moduleCommonPath, getModuleServerCommonPath(moduleName));
+    lib.symlink(moduleCommonPath, getModuleServerCommonPath(moduleName));
   }
-  watchStart(moduleName);
+  startWatch(moduleName);
 }
 
-function addModules(modules) {
-  for(let moduleName of modules) {
-    addModule(moduleName);
-  }
-}
-
-function removeModule(moduleName) {
-  watchStop(moduleName);
-  unlinkSync(path.join(conf.clientSrcPath, moduleName));
-  unlinkSync(path.join(conf.serverSrcPath, moduleName));
-}
-
-function removeModules(modules) {
-  for(let moduleName of modules) {
-    removeModule(moduleName);
-  }
+function remove(moduleName) {
+  stopWatch(moduleName);
+  lib.unlink(getClientModulePath(moduleName));
+  lib.unlink(getServerModulePath(moduleName));
 }
 
 function getModuleClientPath(moduleName) {
@@ -138,12 +127,11 @@ function getServerModulePath(moduleName) {
 }
 
 module.exports.synchronize = synchronize;
-module.exports.watchStart = watchStart;
-module.exports.watchStop = watchStop;
-module.exports.addModule = addModule;
-module.exports.addModules = addModules;
-module.exports.removeModule = removeModule;
-module.exports.removeModules = removeModules;
+module.exports.startWatch = startWatch;
+module.exports.stopWatch = stopWatch;
+module.exports.add = add;
+module.exports.remove = remove;
+//module.exports.gitignore = gitignore;
 module.exports.getModuleClientPath = getModuleClientPath;
 module.exports.getModuleCommonPath = getModuleCommonPath;
 module.exports.getModuleServerPath = getModuleServerPath;

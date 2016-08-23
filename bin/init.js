@@ -1,25 +1,30 @@
 'use strict';
 
 const path = require('path');
+const fs = require('fs');
+const conf = require('./conf');
 const lib = require('./lib');
-const mkdirsSync = lib.mkdirsSync;
-const symlinkSync = lib.symlinkSync;
-const fsExistsSync = lib.fsExistsSync;
 
-function init(conf) {
+function init() {
   if(conf.serverRootPathShouldExist && !fsExistsSync(conf.serverRootPath)) {
     console.warn('The server directory should already exit :');
     console.warn('   ', conf.serverRootPath);
     process.exit();
   }
-  mkdirsSync(conf.clientRootPath);
-  mkdirsSync(conf.clientSrcPath);
+  lib.mkdirs(conf.clientRootPath);
+  lib.mkdirs(conf.clientSrcPath);
 
-  mkdirsSync(conf.serverRootPath);
-  mkdirsSync(conf.serverSrcPath);
+  lib.mkdirs(conf.serverRootPath);
+  lib.mkdirs(conf.serverSrcPath);
  
-  mkdirsSync(conf.modulesRootPath);
-  mkdirsSync(conf.nodeModulesPath);
-  symlinkSync(conf.nodeModulesPath, path.join(conf.modulesRootPath, 'node_modules'));
+  lib.mkdirs(conf.modulesRootPath);
+  lib.mkdirs(conf.nodeModulesPath);
+  lib.symlink(conf.nodeModulesPath, path.join(conf.modulesRootPath, 'node_modules'));
+
+  if(conf.confFileInitialized == false) {
+    console.warn('--- Initialize', conf.confFilePath);
+    fs.writeFileSync(conf.confFilePath, '{}', 'utf-8');
+    conf.confFileInitialized == true;
+  }
 }
 module.exports = init;

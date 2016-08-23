@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 'use strict';
 
+//node ..\..\meteor-npm\modules-client-server\bin\modules-client-server.js
+
 const fs = require('fs-extra');
 const path = require('path');
 
 const lib = require('./lib');
-const fsExistsSync = lib.fsExistsSync;
-const isDirOrSymlinkDirSync = lib.isDirOrSymlinkDirSync;
-const hasIntersection = lib.hasIntersection;
 
 const conf = require('./conf');
 const init = require('./init');
-const synchronize = require('./synchronize');
 const modules = require('./modules');
+const gitignore = require('./gitignore');
+
 const packages = require('../package.json');
 
 function help() {
@@ -21,14 +21,14 @@ function help() {
        ${packages.name} --add module1 module2 --remove module3
        ${packages.name} --sync
 
-  -h, --help    this help
-  -v, --version print ${packages.name}.js version
-  -i, --init    initialize the client/server architecture
-  -a, --add     create new module(s) and symlink to client and server side
-                just symlink to client and server side for module(s) already there
-  -r, --remove  unlink a module(s) from client and server side
-  -s, --sync    synchronize the common part of the module to client and server side
-  -w, --watch   watch the modules to sync when necessary`);
+  -h, --help      this help
+  -v, --version   print ${packages.name}.js version
+  -i, --init      initialize the client/server architecture
+  -a, --add       create new module(s) and symlink to client and server side
+                  just symlink to client and server side for module(s) already there
+  -r, --remove    unlink a module(s) from client and server side
+  -s, --sync      synchronize the common part of the module to client and server side
+  -w, --watch     watch the modules to sync when necessary`);
 }
 
 const options = {
@@ -91,38 +91,70 @@ while(i < process.argv.length) {
 if (options.paramHelp) {
   help();
 }
+
 if (options.paramVersion) {
   console.info(`v${packages.version}`);
 }
+
 if (options.paramInit) {
   init(conf);
   options.paramSync = true;
 }
+
 if(options.showConf) {
-  conf.showConf();
+  conf.show();
 }
-if (hasIntersection(options.modulesToAdd, options.modulesToRemove)) {
+
+if (lib.hasIntersection(options.modulesToAdd, options.modulesToRemove)) {
   console.warn(`can't add and remove the same module at same time`);
   process.exit();
 }
+
 if (options.modulesToAdd.length > 0) {
-  modules.addModules(options.modulesToAdd);
+  for(let moduleName of options.modulesToAdd) {
+    modules.add(moduleName);
+  }
   options.paramSync = true;
 }
+
 if (options.modulesToRemove.length > 0) {
-  modules.removeModules(options.modulesToRemove);
+  for(let moduleName of options.modulesToRemove) {
+    modules.remove(moduleName);
+  }
   options.paramSync = true;
 }
-if(options.paramSync) {
-  synchronize();
+
+if(options.paramSync || options.paramWatch) {
+  lib.symlink(conf.nodeModulesPath, path.join(conf.modulesRootPath, 'node_modules'));
+  for(let moduleName of fs.readdirSync(conf.modulesRootPath)) {
+    if(moduleName !== 'node_modules' && lib.isDir(path.join(conf.modulesRootPath, moduleName))) {
+      modules.synchronize(moduleName);
+    }
+  }
 }
+
+console.info('clientSymlinkList :', conf.clientSymlinkList);
+console.info('serverSymlinkList :', conf.serverSymlinkList);
+console.info('modulesSymlinkList :', conf.modulesSymlinkList);
+console.info('clientSymlinkListAdd :', conf.clientSymlinkListAdd);
+console.info('serverSymlinkListAdd :', conf.serverSymlinkListAdd);
+console.info('modulesSymlinkListAdd :', conf.modulesSymlinkListAdd);
+console.info('clientSymlinkListRemove :', conf.clientSymlinkListRemove);
+console.info('serverSymlinkListRemove :', conf.serverSymlinkListRemove);
+console.info('modulesSymlinkListRemove :', conf.modulesSymlinkListRemove);
+gitignore.update();
+conf.update();
+
 if(options.paramWatch) {
   conf.watcherActive = true;
   function watchStartAll() {
     for(let moduleName of fs.readdirSync(conf.modulesRootPath)) {
-      if(moduleName !== 'node_modules') {
-        modules.watchStart(moduleName);
+      if(moduleName !== 'node_modules' && lib.isDir(path.join(conf.modulesRootPath, moduleName))) {
+        modules.startWatch(moduleName);
       }
+    }
+    if(conf.gitignore) {
+      gitignore.update();
     }
   }
   fs.watch(conf.modulesRootPath, event => {
