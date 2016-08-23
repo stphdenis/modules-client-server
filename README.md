@@ -130,6 +130,7 @@ The `--conf` command show you the current configuration.
 - `serverModulesName` : name of the directory where all modules have to be under `serverSrcPath` if defined
 - `moduleClientCommonName` : name of the directory where all common ressources of each modules have to be for the client side if defined
 - `moduleServerCommonName` : name of the directory where all common ressources of each modules have to be for the server side if defined
+- `gitignore` : the symlinks are included in `.gitignore` files of client, server and modules root directories (default to true)
 
 If `moduleClientCommonName` and `moduleServerCommonName` are both used, you don't have to use `--sync`.
 
