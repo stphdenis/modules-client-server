@@ -30,6 +30,8 @@ function symlink(targetPath, sourcePath) {
   const symlinkMetadata = getSymlinkMetadata(sourcePath);
   const symlinkPath = sourcePath.substr(conf.rootPath.length + 1);
   if (!pathExists(sourcePath)) {
+    console.warn('sourcePath:', sourcePath, 'does not exist !!!');
+  } else if (!pathExists(sourcePath)) {
     if (isDir(targetPath)) {
       if (platformIsWindows) {
         fs.symlinkSync(targetPath, sourcePath, 'junction');
@@ -37,11 +39,18 @@ function symlink(targetPath, sourcePath) {
         fs.symlinkSync(targetPath, sourcePath, 'dir');
       }
     } else {
-      fs.symlinkSync(targetPath, sourcePath, 'file');
+      try {
+        fs.symlinkSync(targetPath, sourcePath, 'file');
+      } catch (ex) {
+        console.error(ex);
+        if(platformIsWindows) {
+          console.error('On windows, you must have admin privs');
+        }
+      }
     }
-  }
-  if (conf[symlinkMetadata.symlinkList + 'Add'].indexOf(symlinkMetadata.symlinkPath) === -1) {
-    conf[symlinkMetadata.symlinkList + 'Add'].push(symlinkMetadata.symlinkPath);
+    if (conf[symlinkMetadata.symlinkList + 'Add'].indexOf(symlinkMetadata.symlinkPath) === -1) {
+      conf[symlinkMetadata.symlinkList + 'Add'].push(symlinkMetadata.symlinkPath);
+    }
   }
 }
 module.exports.symlink = symlink;
