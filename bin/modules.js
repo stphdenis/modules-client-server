@@ -16,7 +16,7 @@ function synchronize(moduleName) {
       lib.symlink(path.join(moduleCommonPath, commonDir), path.join(moduleClientPath, commonDir));
     }
     for(let symlinkDir of fs.readdirSync(moduleClientPath)) {
-      if(lib.isSymlink(path.join(moduleClientPath, symlinkDir)) && !lib.isDir(path.join(moduleCommonPath, symlinkDir))) {
+      if(lib.isSymlink(path.join(moduleClientPath, symlinkDir)) && !lib.pathExists(path.join(moduleCommonPath, symlinkDir))) {
         lib.unlink(path.join(moduleClientPath, symlinkDir));
       }
     }
@@ -28,7 +28,7 @@ function synchronize(moduleName) {
       lib.symlink(path.join(moduleCommonPath, commonDir), path.join(moduleServerPath, commonDir));
     }
     for(let symlinkDir of fs.readdirSync(moduleServerPath)) {
-      if(lib.isSymlink(path.join(moduleServerPath, symlinkDir)) && !lib.isDir(path.join(moduleCommonPath, symlinkDir))) {
+      if(lib.isSymlink(path.join(moduleServerPath, symlinkDir)) && !lib.pathExists(path.join(moduleCommonPath, symlinkDir))) {
         lib.unlink(path.join(moduleServerPath, symlinkDir));
       }
     }
