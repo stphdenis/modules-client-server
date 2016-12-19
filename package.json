@@ -1,6 +1,6 @@
 {
   "name": "modules-client-server",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "This package structure your project so you can have your client, server and modules in different places.",
   "bin": "./bin/modules-client-server.js",
   "engines": {
