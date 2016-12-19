@@ -29,8 +29,8 @@ function getSymlinkMetadata(targetPath) {
 function symlink(targetPath, sourcePath) {
   const symlinkMetadata = getSymlinkMetadata(sourcePath);
   const symlinkPath = sourcePath.substr(conf.rootPath.length + 1);
-  if (!pathExists(sourcePath)) {
-    console.warn('sourcePath:', sourcePath, 'does not exist !!!');
+  if (!pathExists(targetPath)) {
+    console.warn('targetPath:', targetPath, 'does not exist !!!');
   } else if (!pathExists(sourcePath)) {
     if (isDir(targetPath)) {
       if (platformIsWindows) {
